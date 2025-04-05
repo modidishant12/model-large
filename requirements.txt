@@ -1,6 +1,5 @@
-numpy
-scikit-learn
-pandas
-pickle
-xgboost
 streamlit
+pandas
+numpy
+joblib
+pillow

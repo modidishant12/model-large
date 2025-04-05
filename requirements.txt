@@ -3,4 +3,5 @@ pandas
 numpy
 joblib
 pillow
-sklearn
+scikit-learn
+xgboost

@@ -10,10 +10,7 @@ from PIL import Image
 model_path = "order_delivery_model.pkl"
 
 # Check if the model exists, else download
-if not os.path.exists(model_path):
-    file_id = "1cEhD4f1e9tryBVqlEAs0ZIwa_gcaAYIn"
-    url = f"https://drive.google.com/uc?id={file_id}"
-    gdown.download(url, model_path, quiet=False)
+
 
 # Load the model
 rf, xgb = joblib.load(model_path)

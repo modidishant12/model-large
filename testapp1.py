@@ -11,16 +11,15 @@ st.title("📦 Order Delivery Time Prediction")
 # Define model file path
 model_path = "order_delivery_model.pkl"
 
-# Check if the model file exists
+# Check and load model
 if not os.path.exists(model_path):
-    st.error("Model file not found! Please place 'order_delivery_model.pkl' in the working directory.")
+    st.error("Model file not found! Please upload 'order_delivery_model.pkl'.")
     st.stop()
 
-# Load the model
 try:
     rf, xgb = joblib.load(model_path)
 except Exception as e:
-    st.error(f"Error loading model: {e}")
+    st.error(f"❌ Error loading model: {e}")
     st.stop()
 
 # Define feature names
@@ -39,33 +38,48 @@ def ensemble_predict(X):
 # Sidebar inputs
 st.sidebar.header("🔢 Input Parameters")
 
-# Optional image display
+# Optional image
 image_path = "supply_chain_optimisation.jpg"
 if os.path.exists(image_path):
     image = Image.open(image_path)
     st.sidebar.image(image, caption="Supply Chain Optimization", use_container_width=True)
 
-# User inputs
-purchase_dow = st.sidebar.number_input("Purchased Day of the Week", 0, 6, 3)
-purchase_month = st.sidebar.number_input("Purchased Month", 1, 12, 1)
-year = st.sidebar.number_input("Purchased Year", 2018, 2025, 2018)
-product_size_cm3 = st.sidebar.number_input("Product Size (cm³)", 100, 50000, 9328)
-product_weight_g = st.sidebar.number_input("Product Weight (g)", 100, 50000, 1800)
-geolocation_state_customer = st.sidebar.number_input("Customer State", 1, 50, 10)
-geolocation_state_seller = st.sidebar.number_input("Seller State", 1, 50, 20)
-distance = st.sidebar.number_input("Distance (km)", 0.0, 5000.0, 475.35)
+# Input fields with safe limits
+purchase_dow = st.sidebar.slider("Day of Week (0=Mon, 6=Sun)", 0, 6, 3)
+purchase_month = st.sidebar.slider("Month", 1, 12, 6)
+year = st.sidebar.selectbox("Year", [2018, 2019, 2020, 2021])
+product_size_cm3 = st.sidebar.slider("Product Size (cm³)", 100, 30000, 9328)
+product_weight_g = st.sidebar.slider("Product Weight (g)", 100, 30000, 1800)
+geolocation_state_customer = st.sidebar.slider("Customer State Code", 1, 27, 10)
+geolocation_state_seller = st.sidebar.slider("Seller State Code", 1, 27, 20)
+distance = st.sidebar.slider("Distance (km)", 0.0, 3000.0, 475.35)
 
-# Prediction logic
+# Prediction function
 def predict_wait_time():
-    input_data = [[
-        purchase_dow, purchase_month, year, product_size_cm3, product_weight_g,
-        geolocation_state_customer, geolocation_state_seller, distance
-    ]]
-    prediction = ensemble_predict(input_data)
-    return round(prediction[0])
+    try:
+        input_data = [[
+            purchase_dow, purchase_month, year, product_size_cm3, product_weight_g,
+            geolocation_state_customer, geolocation_state_seller, distance
+        ]]
+
+        # Optional warnings for out-of-distribution inputs
+        if distance > 2000:
+            st.warning("⚠️ Distance is unusually high — prediction may be less accurate.")
+        if product_weight_g > 20000:
+            st.warning("⚠️ Product is very heavy — might not generalize well.")
+        if year not in [2018, 2019, 2020, 2021]:
+            st.warning("⚠️ Year is outside training data range.")
+
+        prediction = ensemble_predict(input_data)
+        return round(prediction[0])
+
+    except Exception as e:
+        st.error(f"⚠️ Prediction failed: {e}")
+        return None
 
 # Predict button
 if st.sidebar.button("🚀 Predict Wait Time"):
     with st.spinner("Predicting..."):
         result = predict_wait_time()
-    st.sidebar.success(f"### ⏳ Predicted Delivery Time: **{result} days**")
+    if result is not None:
+        st.sidebar.success(f"### ⏳ Predicted Delivery Time: **{result} days**")

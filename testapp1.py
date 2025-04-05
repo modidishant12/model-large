@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import gdown
+
 import joblib
 import os
 from PIL import Image
